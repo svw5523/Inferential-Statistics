@@ -1,0 +1,97 @@
+---
+title: "Statistical inference with the GSS data"
+author: "Shaohan Wang"
+date: "08/10/2020"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Front Matter
+
+```{r}
+# clean up workspace environment
+rm(list = ls())
+```
+
+* * *
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+```
+
+### Load data
+
+```{r load-data}
+load("gss.Rdata")
+```
+
+* * *
+
+## Part 1: Data
+* gss dataset has 57061 columns with 114 variables and was made by the General Social Survey(GSS) to monitor societal change and studying the growing complexity of American society. These high-quality data was collected between 1972 and 2012 to help scholars and policy makers easily accessing and analyzing diverse and complex social issues in American society.  
+
+* Each case here corresponds to an individual participant ranging from 1972 to 2012 with detailed information. GSS conducts the participants and respondents by in-person or telephone interviewing. This data collection method are based on observation (question and response) which means there is no random assignment, so we cannot establish causality. Besides, because the respondents are randomly drawn and surveys are conducted under multiple sampling, we can conclude generalizability here. However, we may consider non-response sampling bias here because some interviews are only partially completed.
+
+* * *
+
+## Part 2: Research question
+
+**Is the difference of American people's average education level statistically significant between year 1972 and 2012?**
+
+* This question allows us to investigate if American people's average education level (in years) has substantially increased from 1972 to 2012. The variables used here: year, educ. 
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+```{r message=TRUE, warning=TRUE}
+# find the average education level in year 1972 and 2012
+gss %>%
+  filter(year %in% c(1972, 2012)) %>%
+  group_by(year) %>%
+  summarise(mean = mean(educ, na.rm = TRUE))
+
+# visualization of the trend of the average education level through years
+gss %>%
+  group_by(year) %>%
+  summarise(mean_education_level = mean(educ, na.rm = TRUE)) %>%
+  mutate(mean_education_level = round(mean_education_level, 2)) %>%
+  ggplot(aes(x = year, y = mean_education_level, label = mean_education_level)) +
+  geom_point(alpha = 0.2, size = 4) +
+  geom_line() +
+  geom_text(check_overlap = TRUE, size = 3, nudge_y = 0.2) +
+  geom_smooth(method = 'loess') +
+  ggtitle('Trend of education level through years') +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+* By the graph, we can easily find that the education level (in years) is growing through years from 1972 to 2012. Besides, there is remarkable difference between the average education level in 1972 and in 2012. So, we can conclude that the difference of American people's average education level is statistically remarkable between year 1972 and 2012. 
+
+* * *
+
+## Part 4: Inference
+
+```{r}
+# Contruct the confidence interval of the difference of American people's average education level between year 1972 and 2012
+gss %>%
+  filter(year %in% c(1972, 2012)) %>%
+  inference(y = educ, x = year, statistic = "mean", type = "ci", conf_level = 0.95, method = "theoretical", order = c(2012, 1972))
+
+# Now conduct the hypothesis test and check if same as the result in confidence interval
+gss %>%
+  filter(year %in% c(1972, 2012)) %>%
+  inference(y = educ, x = year, statistic = "mean", type = "ht", conf_level = 0.95, alternative = 'greater', method = "theoretical", order = c(2012, 1972))
+```
+
+* By the definition of confidence interval, we will have 95% of the ci containing the population mean. To test the difference, we assume null hypothesis to be 0 (no difference). Now, the ci is (1.9825, 2.4191) and obviously, Ho: diff = 0 is not in this range. Thus, we reject the null hypothesis by contructing ci. Besides, by conducting hypothesis test, we have a very small p-value which is smaller than 0.0001, and thus, we will also reject the null hypothesis here. 
+
+* In conclusion, we have shown that the difference of American people's average education level is statistically significant between year 1972 and 2012. 
