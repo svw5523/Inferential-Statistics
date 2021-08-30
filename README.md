@@ -1,4 +1,4 @@
-# Statistics with R Specialization---Coursera
+## Statistics with R Specialization Coursera
 ## Intro to Data & Probability - Project Rubric
 
 ### Part 1: Data (3 points)
